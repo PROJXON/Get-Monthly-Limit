@@ -6,7 +6,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (!admin) throw new Response("Unauthorized", { status: 401 });
 
   const orderId = payload.id.toString();
-
   const shopData = await admin.graphql(`
     {
       shop {
@@ -21,21 +20,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const shopJson = await shopData.json();
   const shop = shopJson.data.shop;
-
   const shopId = shop.id;
 
   let processedOrders: string[] = shop.processedOrders?.value
     ? shop.processedOrders.value.split(",")
     : [];
 
-  if (processedOrders.includes(orderId)) {
-    return new Response();
-  }
+  if (processedOrders.includes(orderId)) return new Response();
 
   let totalQuantity = 0;
-  for (const item of payload.line_items) {
-    totalQuantity += item.quantity;
-  }
+  for (const item of payload.line_items) totalQuantity += item.quantity;
 
   const monthlyLimit = parseInt(shop.monthlyLimit?.value || "0");
   if (monthlyLimit <= 0) throw new Error("monthly_limit must be set and > 0");
@@ -90,7 +84,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   `);
 
   const json = await result.json();
-
   if (json.data.metafieldsSet.userErrors.length) {
     console.error("Metafield errors:", json.data.metafieldsSet.userErrors);
   }
